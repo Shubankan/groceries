@@ -206,8 +206,12 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
   element.innerHTML = normalizedItems.map((entry, index) => {
     const item = typeof entry === "string" ? entry : entry.item || "Item";
     const detail = detailKeys.map((key) => entry[key]).find(Boolean) || "";
+    const checked = Boolean(entry.checked);
     const actions = options.actions === "removeNeeded" ? `
       <div class="needed-actions" data-needed-item="${escapeHtml(item)}">
+        <button class="needed-check-button" type="button" data-needed-action="toggle" aria-label="Mark ${escapeHtml(item)} as picked up" aria-pressed="${checked}">
+          <span aria-hidden="true">${checked ? "✓" : ""}</span>
+        </button>
         <button class="needed-remove" type="button" data-needed-action="remove" aria-label="Remove ${escapeHtml(item)}">-</button>
       </div>
     ` : options.actions === "moveToNeeded" ? `
@@ -228,7 +232,7 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
     ` : "";
 
     return `
-      <div class="result-card">
+      <div class="result-card${checked ? " is-checked" : ""}">
         <strong>${escapeHtml(item)}</strong>
         ${detail ? `<span>${escapeHtml(detail)}</span>` : ""}
         ${actions}
@@ -296,6 +300,24 @@ function removeNeededItem(item) {
   currentAnalysis.need = normalizeList(currentAnalysis.need).filter((entry) => entry.item !== item);
   renderAnalysisResults();
   helperText.textContent = `${item} removed from needed groceries.`;
+}
+
+function toggleNeededItem(item) {
+  if (!currentAnalysis || !item) return;
+
+  currentAnalysis.need = normalizeList(currentAnalysis.need).map((entry) => {
+    if (entry.item !== item) return entry;
+    return {
+      ...entry,
+      checked: !entry.checked
+    };
+  });
+
+  const checkedItem = normalizeList(currentAnalysis.need).find((entry) => entry.item === item);
+  renderAnalysisResults();
+  helperText.textContent = checkedItem?.checked
+    ? `${item} checked off.`
+    : `${item} moved back to needed.`;
 }
 
 function moveDontNeedToNeeded(item) {
@@ -497,6 +519,11 @@ document.querySelector("#need-list").addEventListener("click", (event) => {
   if (!button) return;
 
   const actions = button.closest(".needed-actions");
+  if (button.dataset.neededAction === "toggle") {
+    toggleNeededItem(actions?.dataset.neededItem);
+    return;
+  }
+
   removeNeededItem(actions?.dataset.neededItem);
 });
 document.querySelector("#dont-need-list").addEventListener("click", (event) => {
