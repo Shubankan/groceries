@@ -232,7 +232,7 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
     ` : "";
 
     return `
-      <div class="result-card${checked ? " is-checked" : ""}">
+      <div class="result-card${checked ? " is-checked" : ""}${options.actions === "moveToNeeded" ? " has-top-action" : ""}">
         <strong>${escapeHtml(item)}</strong>
         ${detail ? `<span>${escapeHtml(detail)}</span>` : ""}
         ${actions}
