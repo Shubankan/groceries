@@ -37,7 +37,7 @@ const results = document.querySelector("#results");
 const resetListButton = document.querySelector("#reset-list-button");
 const clearRecommendedButton = document.querySelector("#clear-recommended-button");
 const maxPhotos = 10;
-const progressDurationMs = 15000;
+const progressDurationMs = 20000;
 
 let selectedPhotos = [];
 let groceryItems = [...defaultGroceryItems];
