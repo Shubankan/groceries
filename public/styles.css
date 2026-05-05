@@ -633,7 +633,8 @@ h1 {
 }
 
 .needed-toggle,
-.needed-remove {
+.needed-remove,
+.move-needed-button {
   min-height: 38px;
   border: 1px solid rgba(40, 120, 79, 0.18);
   background: rgba(255, 255, 255, 0.7);
@@ -652,15 +653,24 @@ h1 {
   border-radius: 999px;
 }
 
-.needed-remove {
+.needed-remove,
+.move-needed-button {
   display: grid;
-  flex: 0 0 42px;
   width: 42px;
   place-items: center;
   border-radius: 50%;
-  color: #6c746d;
   font-size: 1.18rem;
   line-height: 1;
+}
+
+.needed-remove {
+  flex: 0 0 42px;
+  color: #6c746d;
+}
+
+.move-needed-button {
+  margin-top: 10px;
+  color: var(--green-deep);
 }
 
 .needed-toggle[aria-pressed="true"] {
@@ -737,6 +747,7 @@ h1 {
 .recommendation-actions button:active,
 .needed-toggle:active,
 .needed-remove:active,
+.move-needed-button:active,
 .clear-result-button:active {
   transform: translateY(1px);
 }

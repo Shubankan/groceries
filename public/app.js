@@ -215,6 +215,8 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
         </button>
         <button class="needed-remove" type="button" data-needed-action="remove" aria-label="Remove ${escapeHtml(item)}">-</button>
       </div>
+    ` : options.actions === "moveToNeeded" ? `
+      <button class="move-needed-button" type="button" data-dont-need-item="${escapeHtml(item)}" aria-label="Move ${escapeHtml(item)} to needed groceries">+</button>
     ` : options.actions === "resolveUnsure" ? `
       <div class="resolution-actions" data-item="${escapeHtml(entry.item || "")}">
         <button type="button" data-resolution="need">Need</button>
@@ -244,7 +246,9 @@ function renderAnalysisResults() {
   renderResultList("#need-list", sortNeededItems(currentAnalysis.need || []), ["reason"], {
     actions: "checkNeeded"
   });
-  renderResultList("#dont-need-list", sortResultItems(currentAnalysis.dontNeed || []), ["evidence", "reason"]);
+  renderResultList("#dont-need-list", sortResultItems(currentAnalysis.dontNeed || []), ["evidence", "reason"], {
+    actions: "moveToNeeded"
+  });
   renderResultList("#unsure-list", sortResultItems(currentAnalysis.unsure || []), ["reason"], {
     actions: "resolveUnsure"
   });
@@ -322,6 +326,23 @@ function handleNeededItem(item, action) {
   if (action === "remove") {
     removeNeededItem(item);
   }
+}
+
+function moveDontNeedToNeeded(item) {
+  if (!currentAnalysis || !item) return;
+
+  currentAnalysis.dontNeed = normalizeList(currentAnalysis.dontNeed).filter((entry) => entry.item !== item);
+  currentAnalysis.need = [
+    ...normalizeList(currentAnalysis.need).filter((entry) => entry.item !== item),
+    {
+      item,
+      reason: "Moved to needed by you.",
+      checked: false
+    }
+  ];
+
+  renderAnalysisResults();
+  helperText.textContent = `${item} moved to needed groceries.`;
 }
 
 function removeRecommendedItem(item) {
@@ -500,6 +521,12 @@ document.querySelector("#need-list").addEventListener("click", (event) => {
 
   const actions = button.closest(".needed-actions");
   handleNeededItem(actions?.dataset.neededItem, button.dataset.neededAction);
+});
+document.querySelector("#dont-need-list").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-dont-need-item]");
+  if (!button) return;
+
+  moveDontNeedToNeeded(button.dataset.dontNeedItem);
 });
 document.querySelector("#unsure-list").addEventListener("click", (event) => {
   const button = event.target.closest("[data-resolution]");
