@@ -49,6 +49,7 @@ function createAnalysisSchema(groceryList) {
       quickTips: {
         type: "array",
         items: { type: "string" },
+        minItems: 3,
         maxItems: 3
       },
       recommended: {
@@ -101,6 +102,32 @@ function normalizeMealPlan(value) {
   return value.replace(/\s+/g, " ").trim().slice(0, 100);
 }
 
+function normalizeQuickTips(tips) {
+  const fallbackTips = [
+    "Put the most perishable needed items at the top of your grocery run.",
+    "Check labels and dates before buying duplicates of items you may already have.",
+    "Group fridge, freezer, and pantry items together to make shopping faster."
+  ];
+  const normalizedTips = [];
+
+  if (Array.isArray(tips)) {
+    for (const tip of tips) {
+      if (typeof tip !== "string") continue;
+      const cleanTip = tip.replace(/\s+/g, " ").trim().slice(0, 160);
+      if (!cleanTip) continue;
+      normalizedTips.push(cleanTip);
+      if (normalizedTips.length === 3) break;
+    }
+  }
+
+  for (const tip of fallbackTips) {
+    if (normalizedTips.length === 3) break;
+    normalizedTips.push(tip);
+  }
+
+  return normalizedTips;
+}
+
 function normalizeAnalysis(analysis, groceryList) {
   const byItem = new Map();
   const seenNeededItems = new Set();
@@ -109,7 +136,7 @@ function normalizeAnalysis(analysis, groceryList) {
     need: [],
     dontNeed: [],
     unsure: [],
-    quickTips: Array.isArray(analysis.quickTips) ? analysis.quickTips.slice(0, 3) : [],
+    quickTips: normalizeQuickTips(analysis.quickTips),
     recommended: []
   };
 
@@ -254,6 +281,7 @@ export default async function handler(request, response) {
         "Use dontNeed when the item is clearly visible, readable on packaging, or strongly implied by a visible equivalent, meaning the user should not buy more.",
         "Use need only after checking all photos carefully and finding no convincing visual evidence that the item is stocked.",
         "Use unsure when photo quality, angle, occlusion, or packaging ambiguity prevents a confident decision.",
+        "Always include exactly 3 quickTips. Make them concise, practical, and specific to shopping or using the scan results.",
         "Also recommend up to 5 additional healthy, nutrient-dense grocery items that are not already on the grocery scan list and are not visibly stocked in the photos. Favor practical fridge/freezer/pantry staples such as leafy greens, berries, beans, lentils, tofu, salmon, nuts, seeds, kefir, or similar whole foods.",
         mealPlan
           ? `The user is planning to cook: ${mealPlan}. Identify the practical core ingredients for that meal. If any required meal ingredient is not clearly visible in the photos, add it to the need array, even when it is not already on the grocery scan list. Keep these meal additions specific, grocery-store friendly, and avoid adding optional garnishes unless they are central to the dish.`
