@@ -588,6 +588,47 @@ h1 {
   line-height: 1.35;
 }
 
+.result-card.is-checked {
+  opacity: 0.58;
+}
+
+.result-card.is-checked strong {
+  text-decoration: line-through;
+}
+
+.needed-toggle {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0 12px;
+  border: 1px solid rgba(40, 120, 79, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--green-deep);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.needed-toggle[aria-pressed="true"] {
+  background: #e8f6e8;
+  color: #566156;
+}
+
+.needed-check {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid rgba(40, 120, 79, 0.26);
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--green-deep);
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
 .result-empty {
   padding: 10px 0 0;
   border-top: 1px solid rgba(20, 32, 25, 0.1);
@@ -642,6 +683,7 @@ h1 {
 
 .resolution-actions button:active,
 .recommendation-actions button:active,
+.needed-toggle:active,
 .clear-result-button:active {
   transform: translateY(1px);
 }

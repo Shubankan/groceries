@@ -183,6 +183,10 @@ function sortResultItems(items) {
   return [...items].sort((a, b) => groceryItems.indexOf(a.item) - groceryItems.indexOf(b.item));
 }
 
+function sortNeededItems(items) {
+  return sortResultItems(items).sort((a, b) => Number(Boolean(a.checked)) - Number(Boolean(b.checked)));
+}
+
 function renderResultList(elementId, items, detailKeys, options = {}) {
   const element = document.querySelector(elementId);
   const normalizedItems = normalizeList(items);
@@ -195,7 +199,13 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
   element.innerHTML = normalizedItems.map((entry) => {
     const item = typeof entry === "string" ? entry : entry.item || "Item";
     const detail = detailKeys.map((key) => entry[key]).find(Boolean) || "";
-    const actions = options.actions === "resolveUnsure" ? `
+    const checked = Boolean(entry.checked);
+    const actions = options.actions === "checkNeeded" ? `
+      <button class="needed-toggle" type="button" data-needed-item="${escapeHtml(item)}" aria-pressed="${checked}">
+        <span class="needed-check" aria-hidden="true">${checked ? "✓" : ""}</span>
+        <span>${checked ? "Got it" : "Need it"}</span>
+      </button>
+    ` : options.actions === "resolveUnsure" ? `
       <div class="resolution-actions" data-item="${escapeHtml(entry.item || "")}">
         <button type="button" data-resolution="need">Need</button>
         <button type="button" data-resolution="dontNeed">Don't Need</button>
@@ -209,7 +219,7 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
     ` : "";
 
     return `
-      <div class="result-card">
+      <div class="result-card${checked ? " is-checked" : ""}">
         <strong>${escapeHtml(item)}</strong>
         ${detail ? `<span>${escapeHtml(detail)}</span>` : ""}
         ${actions}
@@ -221,7 +231,9 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
 function renderAnalysisResults() {
   if (!currentAnalysis) return;
 
-  renderResultList("#need-list", sortResultItems(currentAnalysis.need || []), ["reason"]);
+  renderResultList("#need-list", sortNeededItems(currentAnalysis.need || []), ["reason"], {
+    actions: "checkNeeded"
+  });
   renderResultList("#dont-need-list", sortResultItems(currentAnalysis.dontNeed || []), ["evidence", "reason"]);
   renderResultList("#unsure-list", sortResultItems(currentAnalysis.unsure || []), ["reason"], {
     actions: "resolveUnsure"
@@ -243,7 +255,8 @@ function resolveUnsureItem(item, resolution) {
       ...(currentAnalysis.need || []).filter((entry) => entry.item !== item),
       {
         item,
-        reason: "Marked as needed by you."
+        reason: "Marked as needed by you.",
+        checked: false
       }
     ];
   }
@@ -262,6 +275,24 @@ function resolveUnsureItem(item, resolution) {
   helperText.textContent = resolution === "remove"
     ? `${item} removed from unsure.`
     : `${item} moved from unsure.`;
+}
+
+function toggleNeededItem(item) {
+  if (!currentAnalysis || !item) return;
+
+  currentAnalysis.need = normalizeList(currentAnalysis.need).map((entry) => {
+    if (entry.item !== item) return entry;
+    return {
+      ...entry,
+      checked: !entry.checked
+    };
+  });
+
+  const checkedItem = normalizeList(currentAnalysis.need).find((entry) => entry.item === item);
+  renderAnalysisResults();
+  helperText.textContent = checkedItem?.checked
+    ? `${item} checked off.`
+    : `${item} moved back to needed.`;
 }
 
 function removeRecommendedItem(item) {
@@ -432,6 +463,12 @@ previewGrid.addEventListener("click", (event) => {
   URL.revokeObjectURL(selectedPhotos[index].preview);
   selectedPhotos = selectedPhotos.filter((_, photoIndex) => photoIndex !== index);
   updatePhotoState();
+});
+document.querySelector("#need-list").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-needed-item]");
+  if (!button) return;
+
+  toggleNeededItem(button.dataset.neededItem);
 });
 document.querySelector("#unsure-list").addEventListener("click", (event) => {
   const button = event.target.closest("[data-resolution]");
