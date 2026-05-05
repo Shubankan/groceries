@@ -341,6 +341,7 @@ async function analyzeGroceries(request, response) {
         "If the photos show sliced meat, lunch meat, cold cuts, or deli packaging but the label does not clearly say turkey, classify Deli Turkey as unsure rather than dontNeed.",
         "Classify every listed item into exactly one category: need, dontNeed, or unsure.",
         "Use dontNeed when the item is clearly visible, readable on packaging, or strongly implied by a visible equivalent, meaning the user should not buy more.",
+        "If a listed item is visible but appears to have less than about 35% remaining, classify it as need instead of dontNeed because the user likely needs to restock soon. Examples include nearly empty coffee containers, low milk cartons, mostly empty hummus tubs, small remaining egg counts, low oil bottles, or almost-finished bags/boxes.",
         "Use need only after checking all photos carefully and finding no convincing visual evidence that the item is stocked.",
         "Use unsure when photo quality, angle, occlusion, or packaging ambiguity prevents a confident decision.",
         "Always include exactly 3 quickTips. Make them concise, practical, and specific to shopping or using the scan results.",
