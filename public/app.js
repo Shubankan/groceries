@@ -208,10 +208,13 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
     const detail = detailKeys.map((key) => entry[key]).find(Boolean) || "";
     const checked = Boolean(entry.checked);
     const actions = options.actions === "checkNeeded" ? `
-      <button class="needed-toggle" type="button" data-needed-item="${escapeHtml(item)}" aria-pressed="${checked}">
-        <span class="needed-check" aria-hidden="true">${checked ? "✓" : ""}</span>
-        <span>${checked ? "Got it" : "Need it"}</span>
-      </button>
+      <div class="needed-actions" data-needed-item="${escapeHtml(item)}">
+        <button class="needed-toggle" type="button" data-needed-action="toggle" aria-pressed="${checked}">
+          <span class="needed-check" aria-hidden="true">${checked ? "✓" : ""}</span>
+          <span>${checked ? "Got it" : "Need it"}</span>
+        </button>
+        <button class="needed-remove" type="button" data-needed-action="remove" aria-label="Remove ${escapeHtml(item)}">-</button>
+      </div>
     ` : options.actions === "resolveUnsure" ? `
       <div class="resolution-actions" data-item="${escapeHtml(entry.item || "")}">
         <button type="button" data-resolution="need">Need</button>
@@ -300,6 +303,25 @@ function toggleNeededItem(item) {
   helperText.textContent = checkedItem?.checked
     ? `${item} checked off.`
     : `${item} moved back to needed.`;
+}
+
+function removeNeededItem(item) {
+  if (!currentAnalysis || !item) return;
+
+  currentAnalysis.need = normalizeList(currentAnalysis.need).filter((entry) => entry.item !== item);
+  renderAnalysisResults();
+  helperText.textContent = `${item} removed from needed groceries.`;
+}
+
+function handleNeededItem(item, action) {
+  if (action === "toggle") {
+    toggleNeededItem(item);
+    return;
+  }
+
+  if (action === "remove") {
+    removeNeededItem(item);
+  }
 }
 
 function removeRecommendedItem(item) {
@@ -473,10 +495,11 @@ previewGrid.addEventListener("click", (event) => {
   updatePhotoState();
 });
 document.querySelector("#need-list").addEventListener("click", (event) => {
-  const button = event.target.closest("[data-needed-item]");
+  const button = event.target.closest("[data-needed-action]");
   if (!button) return;
 
-  toggleNeededItem(button.dataset.neededItem);
+  const actions = button.closest(".needed-actions");
+  handleNeededItem(actions?.dataset.neededItem, button.dataset.neededAction);
 });
 document.querySelector("#unsure-list").addEventListener("click", (event) => {
   const button = event.target.closest("[data-resolution]");

@@ -625,19 +625,42 @@ h1 {
   text-decoration: line-through;
 }
 
-.needed-toggle {
-  display: inline-flex;
-  min-height: 38px;
+.needed-actions {
+  display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 10px;
-  padding: 0 12px;
+}
+
+.needed-toggle,
+.needed-remove {
+  min-height: 38px;
   border: 1px solid rgba(40, 120, 79, 0.18);
-  border-radius: 999px;
   background: rgba(255, 255, 255, 0.7);
   color: var(--green-deep);
   font-size: 0.78rem;
   font-weight: 850;
+}
+
+.needed-toggle {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 999px;
+}
+
+.needed-remove {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  place-items: center;
+  border-radius: 50%;
+  color: #6c746d;
+  font-size: 1.18rem;
+  line-height: 1;
 }
 
 .needed-toggle[aria-pressed="true"] {
@@ -713,6 +736,7 @@ h1 {
 .resolution-actions button:active,
 .recommendation-actions button:active,
 .needed-toggle:active,
+.needed-remove:active,
 .clear-result-button:active {
   transform: translateY(1px);
 }
