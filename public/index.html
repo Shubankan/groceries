@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f8fbf3">
+    <title>Groceries</title>
+    <link rel="stylesheet" href="/styles.css?v=13">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Fridge, Freezer &amp; Pantry Scan</p>
+          <h1 id="page-title">Groceries</h1>
+          <p class="lede">Upload 3-7 photos and get an AI read on which grocery items are still needed.</p>
+        </div>
+        <div class="status-pill" id="photo-count">0 / 7</div>
+      </section>
+
+      <section class="panel upload-panel" aria-label="Upload photos">
+        <div class="upload-intro">
+          <span class="upload-icon" aria-hidden="true">+</span>
+          <div>
+            <h2>Add fridge, freezer, and pantry photos</h2>
+            <p>Choose from your camera roll or take live pictures, up to 7 total.</p>
+          </div>
+        </div>
+
+        <div class="upload-actions">
+          <label class="upload-option" for="photos">
+            <input id="photos" type="file" accept="image/*" multiple>
+            <span>Camera Roll</span>
+          </label>
+          <label class="upload-option camera" for="camera-photo">
+            <input id="camera-photo" type="file" accept="image/*" capture="environment">
+            <span>Take Photo</span>
+          </label>
+        </div>
+
+        <div class="preview-grid" id="preview-grid" aria-live="polite"></div>
+
+        <button class="primary-action" id="analyze-button" type="button" disabled>
+          Find what I need
+        </button>
+        <div class="analysis-progress" id="analysis-progress" hidden aria-live="polite">
+          <div class="analysis-progress-label">
+            <span class="analyzing-copy">
+              <em>Analyzing</em><span class="dot dot-one">.</span><span class="dot dot-two">.</span><span class="dot dot-three">.</span>
+            </span>
+            <strong id="analysis-progress-percent">0%</strong>
+          </div>
+          <div class="analysis-progress-track" aria-hidden="true">
+            <div class="analysis-progress-fill" id="analysis-progress-fill"></div>
+          </div>
+        </div>
+        <p class="helper" id="helper-text">Add at least 3 photos to begin.</p>
+      </section>
+
+      <section class="panel list-panel" aria-label="Full grocery list">
+        <div class="section-heading">
+          <h2>Scan List</h2>
+          <span id="item-count">18 items</span>
+        </div>
+        <form class="add-item-form" id="add-item-form">
+          <label class="sr-only" for="new-item">Add grocery item</label>
+          <input id="new-item" type="text" autocomplete="off" maxlength="60" placeholder="Add item, e.g. Butter">
+          <button type="submit" aria-label="Add grocery item">+</button>
+        </form>
+        <div class="check-list" id="grocery-list"></div>
+      </section>
+
+      <section class="results" id="results" hidden aria-live="polite">
+        <div class="result-group need">
+          <h2>Needed Groceries</h2>
+          <div id="need-list" class="result-list"></div>
+        </div>
+        <div class="result-group dont-need">
+          <h2>Don't Need</h2>
+          <div id="dont-need-list" class="result-list"></div>
+        </div>
+        <div class="result-group unsure">
+          <h2>Unsure</h2>
+          <div id="unsure-list" class="result-list"></div>
+        </div>
+        <div class="result-group recommended">
+          <h2>Recommended</h2>
+          <div id="recommended-list" class="result-list"></div>
+        </div>
+        <div class="result-group tips">
+          <h2>Quick Tips</h2>
+          <div id="tips-list" class="result-list"></div>
+        </div>
+      </section>
+
+      <button class="reset-list-button" id="reset-list-button" type="button">
+        Reset scan list
+      </button>
+    </main>
+
+    <script src="/app.js?v=15" type="module"></script>
+  </body>
+</html>
