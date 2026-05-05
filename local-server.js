@@ -74,7 +74,7 @@ function createAnalysisSchema(groceryList) {
           type: "object",
           additionalProperties: false,
           properties: {
-            item: { type: "string", enum: groceryList },
+            item: { type: "string" },
             reason: { type: "string" }
           },
           required: ["item", "reason"]
@@ -170,8 +170,14 @@ function normalizeGroceryList(items) {
   return uniqueItems.slice(0, 40);
 }
 
+function normalizeMealPlan(value) {
+  if (typeof value !== "string") return "";
+  return value.replace(/\s+/g, " ").trim().slice(0, 100);
+}
+
 function normalizeAnalysis(analysis, groceryList) {
   const byItem = new Map();
+  const seenNeededItems = new Set();
   const normalized = {
     summary: analysis.summary || "Here is what appears needed from your grocery list.",
     need: [],
@@ -184,9 +190,32 @@ function normalizeAnalysis(analysis, groceryList) {
   for (const status of ["need", "dontNeed", "unsure"]) {
     const entries = Array.isArray(analysis[status]) ? analysis[status] : [];
     for (const entry of entries) {
-      if (!entry || !groceryList.includes(entry.item) || byItem.has(entry.item)) continue;
-      byItem.set(entry.item, status);
-      normalized[status].push(entry);
+      if (!entry || typeof entry.item !== "string") continue;
+      const item = entry.item.replace(/\s+/g, " ").trim().slice(0, 60);
+      if (!item) continue;
+
+      if (status === "need") {
+        const key = item.toLowerCase();
+        if (seenNeededItems.has(key)) continue;
+        seenNeededItems.add(key);
+        if (groceryList.includes(item)) {
+          byItem.set(item, status);
+        }
+        normalized.need.push({
+          item,
+          reason: typeof entry.reason === "string"
+            ? entry.reason.replace(/\s+/g, " ").trim().slice(0, 180)
+            : "Needed."
+        });
+        continue;
+      }
+
+      if (!groceryList.includes(item) || byItem.has(item)) continue;
+      byItem.set(item, status);
+      normalized[status].push({
+        ...entry,
+        item
+      });
     }
   }
 
@@ -198,7 +227,13 @@ function normalizeAnalysis(analysis, groceryList) {
     });
   }
 
-  normalized.need.sort((a, b) => groceryList.indexOf(a.item) - groceryList.indexOf(b.item));
+  normalized.need.sort((a, b) => {
+    const aIndex = groceryList.indexOf(a.item);
+    const bIndex = groceryList.indexOf(b.item);
+    const safeAIndex = aIndex === -1 ? groceryList.length : aIndex;
+    const safeBIndex = bIndex === -1 ? groceryList.length : bIndex;
+    return safeAIndex - safeBIndex;
+  });
   normalized.dontNeed.sort((a, b) => groceryList.indexOf(a.item) - groceryList.indexOf(b.item));
   normalized.unsure.sort((a, b) => groceryList.indexOf(a.item) - groceryList.indexOf(b.item));
   normalized.recommended = normalizeRecommendedItems(analysis.recommended, groceryList);
@@ -248,6 +283,7 @@ async function analyzeGroceries(request, response) {
 
   const images = Array.isArray(payload.images) ? payload.images : [];
   const groceryList = normalizeGroceryList(payload.groceryItems);
+  const mealPlan = normalizeMealPlan(payload.mealPlan);
 
   if (images.length < 3 || images.length > 7) {
     sendJson(response, 400, { error: "Upload 3 to 7 fridge, freezer, or pantry photos." });
@@ -268,7 +304,7 @@ async function analyzeGroceries(request, response) {
     {
       type: "input_text",
       text: [
-        "Carefully and patiently analyze these fridge, freezer, and pantry photos against the fixed grocery list.",
+        "Carefully and patiently analyze these fridge, freezer, and pantry photos against the grocery scan list.",
         "Inspect every visible shelf, drawer, freezer bin, door compartment, pantry area, bag, tub, carton, jar, and package label before deciding.",
         "Pay extra attention to small or partially visible dairy packaging, especially shredded cheese, sliced cheese, mozzarella, yogurt, hummus, milk, eggs, and deli items.",
         "Treat close equivalents as evidence for the requested item when reasonable, for example shredded mozzarella counts as Shredded Cheese.",
@@ -279,9 +315,12 @@ async function analyzeGroceries(request, response) {
         "Use dontNeed when the item is clearly visible, readable on packaging, or strongly implied by a visible equivalent, meaning the user should not buy more.",
         "Use need only after checking all photos carefully and finding no convincing visual evidence that the item is stocked.",
         "Use unsure when photo quality, angle, occlusion, or packaging ambiguity prevents a confident decision.",
-        "Also recommend up to 5 additional healthy, nutrient-dense grocery items that are not already on the fixed grocery list and are not visibly stocked in the photos. Favor practical fridge/freezer/pantry staples such as leafy greens, berries, beans, lentils, tofu, salmon, nuts, seeds, kefir, or similar whole foods.",
-        "Only judge the fixed grocery list. Do not add other groceries.",
-        `Fixed grocery list: ${groceryList.join(", ")}`
+        "Also recommend up to 5 additional healthy, nutrient-dense grocery items that are not already on the grocery scan list and are not visibly stocked in the photos. Favor practical fridge/freezer/pantry staples such as leafy greens, berries, beans, lentils, tofu, salmon, nuts, seeds, kefir, or similar whole foods.",
+        mealPlan
+          ? `The user is planning to cook: ${mealPlan}. Identify the practical core ingredients for that meal. If any required meal ingredient is not clearly visible in the photos, add it to the need array, even when it is not already on the grocery scan list. Keep these meal additions specific, grocery-store friendly, and avoid adding optional garnishes unless they are central to the dish.`
+          : "No planned meal was provided.",
+        "For the original grocery scan list, classify each listed item exactly once into need, dontNeed, or unsure. Extra items are only allowed in need when they are missing ingredients for the planned meal.",
+        `Grocery scan list: ${groceryList.join(", ")}`
       ].join("\n")
     },
     ...images.map((image) => ({

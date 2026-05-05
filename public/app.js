@@ -21,6 +21,7 @@ const defaultGroceryItems = [
 
 const fileInput = document.querySelector("#photos");
 const cameraInput = document.querySelector("#camera-photo");
+const mealPlanInput = document.querySelector("#meal-plan");
 const addItemForm = document.querySelector("#add-item-form");
 const newItemInput = document.querySelector("#new-item");
 const previewGrid = document.querySelector("#preview-grid");
@@ -180,7 +181,13 @@ function normalizeList(items) {
 }
 
 function sortResultItems(items) {
-  return [...items].sort((a, b) => groceryItems.indexOf(a.item) - groceryItems.indexOf(b.item));
+  return [...items].sort((a, b) => {
+    const aIndex = groceryItems.indexOf(a.item);
+    const bIndex = groceryItems.indexOf(b.item);
+    const safeAIndex = aIndex === -1 ? groceryItems.length : aIndex;
+    const safeBIndex = bIndex === -1 ? groceryItems.length : bIndex;
+    return safeAIndex - safeBIndex;
+  });
 }
 
 function sortNeededItems(items) {
@@ -405,7 +412,8 @@ async function analyze() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         images: selectedPhotos.map((photo) => photo.image),
-        groceryItems
+        groceryItems,
+        mealPlan: mealPlanInput.value
       })
     }).then(async (response) => {
       const data = await response.json();

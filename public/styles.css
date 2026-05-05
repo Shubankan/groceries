@@ -272,6 +272,35 @@ h1 {
   color: #ffffff;
 }
 
+.meal-plan-field {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.meal-plan-field span {
+  padding-left: 4px;
+  color: var(--soft-ink);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.meal-plan-field input {
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  padding: 0 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.meal-plan-field input:focus {
+  border-color: rgba(40, 120, 79, 0.72);
+  outline: 4px solid rgba(40, 120, 79, 0.14);
+}
+
 .primary-action {
   width: 100%;
   min-height: 58px;
