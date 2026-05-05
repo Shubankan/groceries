@@ -285,8 +285,8 @@ async function analyzeGroceries(request, response) {
   const groceryList = normalizeGroceryList(payload.groceryItems);
   const mealPlan = normalizeMealPlan(payload.mealPlan);
 
-  if (images.length < 3 || images.length > 7) {
-    sendJson(response, 400, { error: "Upload 3 to 7 fridge, freezer, or pantry photos." });
+  if (images.length < 3 || images.length > 10) {
+    sendJson(response, 400, { error: "Upload 3 to 10 fridge, freezer, or pantry photos." });
     return;
   }
 
