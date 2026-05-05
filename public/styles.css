@@ -634,7 +634,8 @@ h1 {
 
 .needed-toggle,
 .needed-remove,
-.move-needed-button {
+.move-needed-button,
+.tip-ok-button {
   min-height: 38px;
   border: 1px solid rgba(40, 120, 79, 0.18);
   background: rgba(255, 255, 255, 0.7);
@@ -671,6 +672,14 @@ h1 {
 .move-needed-button {
   margin-top: 10px;
   color: var(--green-deep);
+}
+
+.tip-ok-button {
+  min-height: 34px;
+  margin-top: 10px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--soft-ink);
 }
 
 .needed-toggle[aria-pressed="true"] {
@@ -748,6 +757,7 @@ h1 {
 .needed-toggle:active,
 .needed-remove:active,
 .move-needed-button:active,
+.tip-ok-button:active,
 .clear-result-button:active {
   transform: translateY(1px);
 }

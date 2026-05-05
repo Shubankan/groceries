@@ -203,7 +203,7 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
     return;
   }
 
-  element.innerHTML = normalizedItems.map((entry) => {
+  element.innerHTML = normalizedItems.map((entry, index) => {
     const item = typeof entry === "string" ? entry : entry.item || "Item";
     const detail = detailKeys.map((key) => entry[key]).find(Boolean) || "";
     const checked = Boolean(entry.checked);
@@ -216,7 +216,9 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
         <button class="needed-remove" type="button" data-needed-action="remove" aria-label="Remove ${escapeHtml(item)}">-</button>
       </div>
     ` : options.actions === "moveToNeeded" ? `
-      <button class="move-needed-button" type="button" data-dont-need-item="${escapeHtml(item)}" aria-label="Move ${escapeHtml(item)} to needed groceries">+</button>
+        <button class="move-needed-button" type="button" data-dont-need-item="${escapeHtml(item)}" aria-label="Move ${escapeHtml(item)} to needed groceries">+</button>
+    ` : options.actions === "dismissTip" ? `
+      <button class="tip-ok-button" type="button" data-tip-index="${index}">Ok</button>
     ` : options.actions === "resolveUnsure" ? `
       <div class="resolution-actions" data-item="${escapeHtml(entry.item || "")}">
         <button type="button" data-resolution="need">Need</button>
@@ -255,7 +257,9 @@ function renderAnalysisResults() {
   renderResultList("#recommended-list", currentAnalysis.recommended || [], ["reason"], {
     actions: "recommended"
   });
-  renderResultList("#tips-list", currentAnalysis.quickTips || [], []);
+  renderResultList("#tips-list", currentAnalysis.quickTips || [], [], {
+    actions: "dismissTip"
+  });
   clearRecommendedButton.hidden = normalizeList(currentAnalysis.recommended).length === 0;
 }
 
@@ -383,6 +387,13 @@ function clearRecommendedItems() {
   currentAnalysis.recommended = [];
   renderAnalysisResults();
   helperText.textContent = "Recommended items cleared.";
+}
+
+function dismissTip(index) {
+  if (!currentAnalysis) return;
+
+  currentAnalysis.quickTips = normalizeList(currentAnalysis.quickTips).filter((_, tipIndex) => tipIndex !== index);
+  renderAnalysisResults();
 }
 
 function setProgress(percent) {
@@ -541,6 +552,12 @@ document.querySelector("#recommended-list").addEventListener("click", (event) =>
 
   const actions = button.closest(".recommendation-actions");
   handleRecommendedItem(actions?.dataset.item, button.dataset.recommendationAction);
+});
+document.querySelector("#tips-list").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-tip-index]");
+  if (!button) return;
+
+  dismissTip(Number(button.dataset.tipIndex));
 });
 analyzeButton.addEventListener("click", analyze);
 resetListButton.addEventListener("click", resetGroceryList);
