@@ -617,22 +617,12 @@ h1 {
   line-height: 1.35;
 }
 
-.result-card.is-checked {
-  opacity: 0.58;
-}
-
-.result-card.is-checked strong {
-  text-decoration: line-through;
-}
-
 .needed-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  justify-content: start;
   margin-top: 10px;
 }
 
-.needed-toggle,
 .needed-remove,
 .move-needed-button,
 .tip-ok-button {
@@ -642,16 +632,6 @@ h1 {
   color: var(--green-deep);
   font-size: 0.78rem;
   font-weight: 850;
-}
-
-.needed-toggle {
-  display: inline-flex;
-  flex: 1 1 auto;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 12px;
-  border-radius: 999px;
 }
 
 .needed-remove,
@@ -680,24 +660,6 @@ h1 {
   padding: 0 14px;
   border-radius: 999px;
   color: var(--soft-ink);
-}
-
-.needed-toggle[aria-pressed="true"] {
-  background: #e8f6e8;
-  color: #566156;
-}
-
-.needed-check {
-  display: grid;
-  width: 18px;
-  height: 18px;
-  place-items: center;
-  border: 1px solid rgba(40, 120, 79, 0.26);
-  border-radius: 50%;
-  background: #ffffff;
-  color: var(--green-deep);
-  font-size: 0.72rem;
-  line-height: 1;
 }
 
 .result-empty {
@@ -754,7 +716,6 @@ h1 {
 
 .resolution-actions button:active,
 .recommendation-actions button:active,
-.needed-toggle:active,
 .needed-remove:active,
 .move-needed-button:active,
 .tip-ok-button:active,

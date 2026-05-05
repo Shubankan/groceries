@@ -206,13 +206,8 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
   element.innerHTML = normalizedItems.map((entry, index) => {
     const item = typeof entry === "string" ? entry : entry.item || "Item";
     const detail = detailKeys.map((key) => entry[key]).find(Boolean) || "";
-    const checked = Boolean(entry.checked);
-    const actions = options.actions === "checkNeeded" ? `
+    const actions = options.actions === "removeNeeded" ? `
       <div class="needed-actions" data-needed-item="${escapeHtml(item)}">
-        <button class="needed-toggle" type="button" data-needed-action="toggle" aria-pressed="${checked}">
-          <span class="needed-check" aria-hidden="true">${checked ? "✓" : ""}</span>
-          <span>${checked ? "Got it" : "Need it"}</span>
-        </button>
         <button class="needed-remove" type="button" data-needed-action="remove" aria-label="Remove ${escapeHtml(item)}">-</button>
       </div>
     ` : options.actions === "moveToNeeded" ? `
@@ -233,7 +228,7 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
     ` : "";
 
     return `
-      <div class="result-card${checked ? " is-checked" : ""}">
+      <div class="result-card">
         <strong>${escapeHtml(item)}</strong>
         ${detail ? `<span>${escapeHtml(detail)}</span>` : ""}
         ${actions}
@@ -246,7 +241,7 @@ function renderAnalysisResults() {
   if (!currentAnalysis) return;
 
   renderResultList("#need-list", sortNeededItems(currentAnalysis.need || []), ["reason"], {
-    actions: "checkNeeded"
+    actions: "removeNeeded"
   });
   renderResultList("#dont-need-list", sortResultItems(currentAnalysis.dontNeed || []), ["evidence", "reason"], {
     actions: "moveToNeeded"
@@ -295,41 +290,12 @@ function resolveUnsureItem(item, resolution) {
     : `${item} moved from unsure.`;
 }
 
-function toggleNeededItem(item) {
-  if (!currentAnalysis || !item) return;
-
-  currentAnalysis.need = normalizeList(currentAnalysis.need).map((entry) => {
-    if (entry.item !== item) return entry;
-    return {
-      ...entry,
-      checked: !entry.checked
-    };
-  });
-
-  const checkedItem = normalizeList(currentAnalysis.need).find((entry) => entry.item === item);
-  renderAnalysisResults();
-  helperText.textContent = checkedItem?.checked
-    ? `${item} checked off.`
-    : `${item} moved back to needed.`;
-}
-
 function removeNeededItem(item) {
   if (!currentAnalysis || !item) return;
 
   currentAnalysis.need = normalizeList(currentAnalysis.need).filter((entry) => entry.item !== item);
   renderAnalysisResults();
   helperText.textContent = `${item} removed from needed groceries.`;
-}
-
-function handleNeededItem(item, action) {
-  if (action === "toggle") {
-    toggleNeededItem(item);
-    return;
-  }
-
-  if (action === "remove") {
-    removeNeededItem(item);
-  }
 }
 
 function moveDontNeedToNeeded(item) {
@@ -531,7 +497,7 @@ document.querySelector("#need-list").addEventListener("click", (event) => {
   if (!button) return;
 
   const actions = button.closest(".needed-actions");
-  handleNeededItem(actions?.dataset.neededItem, button.dataset.neededAction);
+  removeNeededItem(actions?.dataset.neededItem);
 });
 document.querySelector("#dont-need-list").addEventListener("click", (event) => {
   const button = event.target.closest("[data-dont-need-item]");
