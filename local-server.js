@@ -263,15 +263,16 @@ function normalizeAnalysis(analysis, groceryList) {
   });
   normalized.dontNeed.sort((a, b) => groceryList.indexOf(a.item) - groceryList.indexOf(b.item));
   normalized.unsure.sort((a, b) => groceryList.indexOf(a.item) - groceryList.indexOf(b.item));
-  normalized.recommended = normalizeRecommendedItems(analysis.recommended, groceryList);
+  normalized.recommended = normalizeRecommendedItems(analysis.recommended, groceryList, normalized.need);
 
   return normalized;
 }
 
-function normalizeRecommendedItems(items, groceryList) {
+function normalizeRecommendedItems(items, groceryList, neededItems = []) {
   if (!Array.isArray(items)) return [];
 
   const groceryKeys = new Set(groceryList.map((item) => item.toLowerCase()));
+  const neededKeys = new Set(neededItems.map((entry) => entry.item.toLowerCase()));
   const seenItems = new Set();
   const normalizedItems = [];
 
@@ -279,7 +280,7 @@ function normalizeRecommendedItems(items, groceryList) {
     if (!entry || typeof entry.item !== "string") continue;
     const item = entry.item.replace(/\s+/g, " ").trim().slice(0, 60);
     const key = item.toLowerCase();
-    if (!item || groceryKeys.has(key) || seenItems.has(key)) continue;
+    if (!item || groceryKeys.has(key) || neededKeys.has(key) || seenItems.has(key)) continue;
     seenItems.add(key);
     normalizedItems.push({
       item,
@@ -343,7 +344,9 @@ async function analyzeGroceries(request, response) {
         "Use need only after checking all photos carefully and finding no convincing visual evidence that the item is stocked.",
         "Use unsure when photo quality, angle, occlusion, or packaging ambiguity prevents a confident decision.",
         "Always include exactly 3 quickTips. Make them concise, practical, and specific to shopping or using the scan results.",
-        "Also recommend up to 5 additional healthy, nutrient-dense grocery items that are not already on the grocery scan list and are not visibly stocked in the photos. Favor practical fridge/freezer/pantry staples such as leafy greens, berries, beans, lentils, tofu, salmon, nuts, seeds, kefir, or similar whole foods.",
+        "Recommended is only for optional healthy, nutrient-dense, antioxidant-rich additions that are not already on the grocery scan list, not visibly stocked, and not required for the user's meal plan.",
+        "Recommended must not contain ingredients needed for the planned meal. Missing meal-plan ingredients must go in need, never recommended.",
+        "Recommend up to 5 additional healthy grocery items. Favor practical fridge/freezer/pantry staples such as leafy greens, berries, beans, lentils, tofu, salmon, nuts, seeds, kefir, or similar whole foods.",
         mealPlan
           ? `The user is planning to cook: ${mealPlan}. Identify the practical core ingredients for that meal. If any required meal ingredient is not clearly visible in the photos, add it to the need array, even when it is not already on the grocery scan list. Keep these meal additions specific, grocery-store friendly, and avoid adding optional garnishes unless they are central to the dish.`
           : "No planned meal was provided.",
