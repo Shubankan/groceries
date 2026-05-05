@@ -34,6 +34,7 @@ const groceryList = document.querySelector("#grocery-list");
 const itemCount = document.querySelector("#item-count");
 const results = document.querySelector("#results");
 const resetListButton = document.querySelector("#reset-list-button");
+const clearRecommendedButton = document.querySelector("#clear-recommended-button");
 const maxPhotos = 7;
 const progressDurationMs = 15000;
 
@@ -89,7 +90,7 @@ function updatePhotoState() {
   }
 }
 
-function addGroceryItem(item) {
+function addGroceryItem(item, options = {}) {
   const cleanItem = item.replace(/\s+/g, " ").trim();
   if (!cleanItem) return;
 
@@ -103,7 +104,10 @@ function addGroceryItem(item) {
 
   groceryItems = [...groceryItems, cleanItem.slice(0, 60)];
   renderGroceryList();
-  results.hidden = true;
+  if (options.hideResults !== false) {
+    results.hidden = true;
+  }
+  return cleanItem;
 }
 
 function resetGroceryList() {
@@ -189,10 +193,7 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
   }
 
   element.innerHTML = normalizedItems.map((entry) => {
-    if (typeof entry === "string") {
-      return `<div class="result-card"><strong>${entry}</strong></div>`;
-    }
-
+    const item = typeof entry === "string" ? entry : entry.item || "Item";
     const detail = detailKeys.map((key) => entry[key]).find(Boolean) || "";
     const actions = options.actions === "resolveUnsure" ? `
       <div class="resolution-actions" data-item="${escapeHtml(entry.item || "")}">
@@ -200,12 +201,17 @@ function renderResultList(elementId, items, detailKeys, options = {}) {
         <button type="button" data-resolution="dontNeed">Don't Need</button>
         <button type="button" data-resolution="remove">Remove</button>
       </div>
+    ` : options.actions === "recommended" ? `
+      <div class="recommendation-actions" data-item="${escapeHtml(item)}">
+        <button type="button" data-recommendation-action="add">Add</button>
+        <button type="button" data-recommendation-action="remove">Remove</button>
+      </div>
     ` : "";
 
     return `
       <div class="result-card">
-        <strong>${entry.item || "Item"}</strong>
-        <span>${detail}</span>
+        <strong>${escapeHtml(item)}</strong>
+        ${detail ? `<span>${escapeHtml(detail)}</span>` : ""}
         ${actions}
       </div>
     `;
@@ -220,8 +226,11 @@ function renderAnalysisResults() {
   renderResultList("#unsure-list", sortResultItems(currentAnalysis.unsure || []), ["reason"], {
     actions: "resolveUnsure"
   });
-  renderResultList("#recommended-list", currentAnalysis.recommended || [], ["reason"]);
+  renderResultList("#recommended-list", currentAnalysis.recommended || [], ["reason"], {
+    actions: "recommended"
+  });
   renderResultList("#tips-list", currentAnalysis.quickTips || [], []);
+  clearRecommendedButton.hidden = normalizeList(currentAnalysis.recommended).length === 0;
 }
 
 function resolveUnsureItem(item, resolution) {
@@ -253,6 +262,46 @@ function resolveUnsureItem(item, resolution) {
   helperText.textContent = resolution === "remove"
     ? `${item} removed from unsure.`
     : `${item} moved from unsure.`;
+}
+
+function removeRecommendedItem(item) {
+  if (!currentAnalysis || !item) return false;
+
+  const previousLength = normalizeList(currentAnalysis.recommended).length;
+  currentAnalysis.recommended = normalizeList(currentAnalysis.recommended).filter((entry) => {
+    const recommendedItem = typeof entry === "string" ? entry : entry.item;
+    return recommendedItem !== item;
+  });
+
+  return currentAnalysis.recommended.length !== previousLength;
+}
+
+function handleRecommendedItem(item, action) {
+  if (!currentAnalysis || !item) return;
+
+  if (action === "add") {
+    const addedItem = addGroceryItem(item, { hideResults: false });
+    removeRecommendedItem(item);
+    renderAnalysisResults();
+    helperText.textContent = addedItem
+      ? `${addedItem} added to the scan list.`
+      : `${item} is already on the scan list.`;
+    return;
+  }
+
+  if (action === "remove") {
+    removeRecommendedItem(item);
+    renderAnalysisResults();
+    helperText.textContent = `${item} removed from recommendations.`;
+  }
+}
+
+function clearRecommendedItems() {
+  if (!currentAnalysis) return;
+
+  currentAnalysis.recommended = [];
+  renderAnalysisResults();
+  helperText.textContent = "Recommended items cleared.";
 }
 
 function setProgress(percent) {
@@ -391,8 +440,16 @@ document.querySelector("#unsure-list").addEventListener("click", (event) => {
   const actions = button.closest(".resolution-actions");
   resolveUnsureItem(actions?.dataset.item, button.dataset.resolution);
 });
+document.querySelector("#recommended-list").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-recommendation-action]");
+  if (!button) return;
+
+  const actions = button.closest(".recommendation-actions");
+  handleRecommendedItem(actions?.dataset.item, button.dataset.recommendationAction);
+});
 analyzeButton.addEventListener("click", analyze);
 resetListButton.addEventListener("click", resetGroceryList);
+clearRecommendedButton.addEventListener("click", clearRecommendedItems);
 
 renderGroceryList();
 updatePhotoState();
